@@ -3,10 +3,10 @@ const { ccclass, property } = cc._decorator;
 export default class GameSettings extends cc.Component {
     
     @property
-    public width: number = 8;
+    public boardWidth: number = 8;
 
     @property
-    public height: number = 8;
+    public boardHeight: number = 8;
 
     @property([cc.SpriteFrame])
     public tileSprites: cc.SpriteFrame[] = [];
@@ -16,4 +16,10 @@ export default class GameSettings extends cc.Component {
 
     @property
     public maxMoves: number = 20;
+    
+    @property
+    public minGroupSize: number = 2;
+    
+    @property
+    public scorePerTile: number = 10;
 }

@@ -1,17 +1,29 @@
 import { BehaviorSubject } from 'rxjs';
 
 export class TileModel {
-    readonly x: number;
-    readonly y: number;
+    private index: cc.Vec2;
+    private groupIndex: number;
 
-    private _sprite$: BehaviorSubject<number>;
+    private _sprite$: BehaviorSubject<cc.SpriteFrame>;
     private _isEmpty$: BehaviorSubject<boolean>;
 
-    constructor(x: number, y: number, initialColor: number) {
-        this.x = x;
-        this.y = y;
-        this._sprite$ = new BehaviorSubject<number>(initialColor);
+    constructor(initialSprite: cc.SpriteFrame, spriteIndex: number) {
+        this._sprite$ = new BehaviorSubject<cc.SpriteFrame>(initialSprite);
+        this.groupIndex = spriteIndex;
         this._isEmpty$ = new BehaviorSubject<boolean>(false);
+    }
+
+    public setTileIndex(x: number, y: number)
+    {
+        this.index = cc.v2(x, y);
+    }
+
+    get Index(){
+        return this.index;
+    }
+
+    get GroupIndex(){
+        return this.groupIndex;
     }
 
     get sprite$() {
@@ -22,7 +34,7 @@ export class TileModel {
         return this._isEmpty$.asObservable();
     }
 
-    get Sprite(): number {
+    get Sprite(): cc.SpriteFrame {
         return this._sprite$.value;
     }
 
@@ -30,7 +42,8 @@ export class TileModel {
         return this._isEmpty$.value;
     }
 
-    setSpriteIndex(newSprite: number): void {
+    setSprite(newSprite: cc.SpriteFrame, spriteIndex: number): void {
+        this.groupIndex = spriteIndex;
         this._sprite$.next(newSprite);
     }
 

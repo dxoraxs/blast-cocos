@@ -7,15 +7,15 @@ const { ccclass, property } = cc._decorator;
 @ccclass
 export default class BoardView extends cc.Component {
     @property(cc.Prefab)
-    private tilePrefab: TileView = null;
+    private tilePrefab: cc.Prefab = null;
 
     private cellSize: number;
-    private gameSettings: GameSettings;
+    private boardSize: cc.Vec2;
     private tileViews: TileView[][] = [];
 
-    public buildBoard(models: TileModel[][], gameSetting: GameSettings): void {
+    public buildBoard(models: TileModel[][]): void {
         this.calculateCellSizeFromModels(models);
-        this.gameSettings = gameSetting;
+        this.boardSize = cc.v2(models.length, models[0].length);
         this.node.removeAllChildren();
         this.tileViews = [];
 
@@ -25,15 +25,15 @@ export default class BoardView extends cc.Component {
             for (let x = 0; x < models[y].length; x++) {
                 const model = models[y][x];
                 const tileNode = cc.instantiate(this.tilePrefab);
-                tileNode.node.parent = this.node;
+                tileNode.parent = this.node;
 
-                tileNode.node.setPosition(this.getTilePosition(x, y));
+                tileNode.setPosition(this.getTilePosition(x, y));
 
                 const tileView = tileNode.getComponent(TileView);
-                tileView.setSprite(this.getSpriteFromSettings(model.Sprite));
-                
+                tileView.setSprite(model.Sprite);
+
                 model.sprite$.subscribe(spriteIndex => {
-                    tileView.setSprite(this.getSpriteFromSettings(spriteIndex));
+                    tileView.setSprite(spriteIndex);
                 });
 
                 model.isEmpty$.subscribe(isEmpty => {
@@ -48,6 +48,10 @@ export default class BoardView extends cc.Component {
             this.tileViews.push(row);
         }
     }
+    
+    public getTileView(x: number, y: number): TileView {
+        return this.tileViews?.[y]?.[x] || null;
+    }
 
     private calculateCellSizeFromModels(models: TileModel[][]): void {
         const rows = models.length;
@@ -58,13 +62,9 @@ export default class BoardView extends cc.Component {
         this.cellSize = boardWidth / maxSide;
     }
 
-    private getSpriteFromSettings(index: number): cc.SpriteFrame {
-        return this.gameSettings.tileSprites[index];
-    }
-
     private getTilePosition(x: number, y: number): cc.Vec2 {
-        const startX = -(this.cellSize * 0.5 * this.tileViews.length);
-        const startY = -(this.cellSize * 0.5 * this.tileViews.length);
+        const startX = -(this.cellSize * 0.5 * (this.boardSize.x - 1));
+        const startY = -(this.cellSize * 0.5 * (this.boardSize.y - 1));
         return cc.v2(startX + x * this.cellSize, startY + y * this.cellSize);
     }
 }
