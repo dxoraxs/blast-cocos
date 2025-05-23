@@ -1,0 +1,23 @@
+{
+  "name": "blast-cocos",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dxoraxs/blast-cocos.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dxoraxs/blast-cocos/issues"
+  },
+  "homepage": "https://github.com/dxoraxs/blast-cocos#readme",
+  "description": "",
+  "dependencies": {
+    "rxjs": "^7.8.2"
+  }
+}
