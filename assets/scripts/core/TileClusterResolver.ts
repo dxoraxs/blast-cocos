@@ -23,27 +23,20 @@ export class TileClusterResolver implements ITileClusterResolver {
             }
             
             const tryGetTileResult = this.tileBoardModel.tryGetTile(current.x, current.y);
-            console.log("try get is successful");
+
             if (!tryGetTileResult.success) {
-                console.log("not find tile with index = " + current);
                 continue;
             }
+            
             const model = tryGetTileResult.tile;
-            if (!model) {
-                console.log("find model is null");
-                continue;
-            }
-            if (model.GroupIndex != groupIndex) {
-                console.log("find model have another group index");
-                continue;
-            }
-            if (model.isEmpty) {
-                console.log("find model is empty");
+            if (!model || model.GroupIndex != groupIndex || model.isEmpty) {
                 continue;
             }
 
             const k = key(current.x, current.y);
-            if (visited.has(k)) continue;
+            if (visited.has(k)) {
+                continue;
+            }
 
             visited.add(k);
             result.push(model);

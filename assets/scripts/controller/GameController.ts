@@ -49,9 +49,7 @@ export default class GameController extends cc.Component {
     private handleTileClick(tileModel: TileModel): void {
         const group = this.boardController.clusterResolver.findGroup(tileModel.Index, tileModel.GroupIndex);
 
-        console.log("click tileModel with index = " + tileModel.Index);
         if (group.length < this.gameSettings.minGroupSize) {
-            console.log("not find group with index = " + tileModel.Index + ", with group = " + tileModel.GroupIndex);
             return;
         }
 

@@ -50,7 +50,6 @@ export class TileBoardModel {
         for (const tile of removedTiles) {
             if (tile.isEmpty) {
                 this.setTile(tile.Index.x, tile.Index.y, null);
-                console.log("SET NULL x = " + tile.Index.x + ", y = " + tile.Index.y);
                 const x = tile.Index.x;
                 if (!columnsToProcess.has(x)) {
                     columnsToProcess.set(x, []);
@@ -62,7 +61,6 @@ export class TileBoardModel {
         columnsToProcess.forEach((tilesInColumn, xIndex) => {
             const shiftIndex = tilesInColumn.length;
 
-            console.log("Old tile move to down");
             for (let y = 0, emptyOffset = 0; y < this.board[0].length; y++)
             {
                 const tryGetTileResult = this.tryGetTile( xIndex, y);
@@ -86,8 +84,7 @@ export class TileBoardModel {
                 this.setTile(xIndex, newYIndex, tileModel);
                 tileMapShiftMap.set(tileModel, emptyOffset);
             }
-            
-            console.log("group tile move to up");
+
             for (let index = 0; index < tilesInColumn.length; index++)
             {
                 const tileModel = tilesInColumn[index];
