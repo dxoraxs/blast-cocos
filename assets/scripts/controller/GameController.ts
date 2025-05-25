@@ -10,6 +10,7 @@ import { DefaultScoreFormula } from "../core/scoreCalculator/DefaultScoreFormula
 import { ScoreCalculator } from "../core/scoreCalculator/ScoreCalculator";
 import { ITileClusterResolver } from "../core/ITileClusterResolver";
 import { TileBoardModel } from "../model/TileBoardModel";
+import { Subscription } from "rxjs";
 
 const { ccclass, property } = cc._decorator;
 
@@ -25,6 +26,7 @@ export default class GameController extends cc.Component {
     private scoreCounter = new ScoreCounter();
     private moveCounter = new MoveCounter();
     private scoreCalculator: ScoreCalculator;
+    private clickSubscription?: Subscription;
 
     onLoad() {
         this.boardController = new BoardController(this.gameSettings, this.uiManager.BoardView);
@@ -34,7 +36,12 @@ export default class GameController extends cc.Component {
         this.scoreCounter.reset();
         this.moveCounter.init(this.gameSettings.maxMoves);
 
-        this.boardController.onTileClick$.subscribe(tileModel => {
+        this.bindClicks();
+    }
+
+    private bindClicks(): void {
+        this.clickSubscription?.unsubscribe();
+        this.clickSubscription = this.boardController.onTileClick$.subscribe((tileModel) => {
             this.handleTileClick(tileModel);
         });
     }
@@ -42,14 +49,24 @@ export default class GameController extends cc.Component {
     private handleTileClick(tileModel: TileModel): void {
         const group = this.boardController.clusterResolver.findGroup(tileModel.Index, tileModel.GroupIndex);
 
+        console.log("click tileModel with index = " + tileModel.Index);
         if (group.length < this.gameSettings.minGroupSize) {
+            console.log("not find group with index = " + tileModel.Index + ", with group = " + tileModel.GroupIndex);
             return;
         }
 
-        const newScore = this.scoreCalculator.calculate(group.length);
-        this.scoreCounter.add(newScore);
+        this.collapseGroupLogic(group);  
+    }
+
+    private async collapseGroupLogic(group: TileModel[]): Promise<void> {
+        this.clickSubscription?.unsubscribe();
         this.moveCounter.decrement();
 
-        this.boardController.clearTiles(group);
+        await this.boardController.clearTiles(group);
+        
+        const newScore = this.scoreCalculator.calculate(group.length);
+        this.scoreCounter.add(newScore);
+
+        this.bindClicks();
     }
 }

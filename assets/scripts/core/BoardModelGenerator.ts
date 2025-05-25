@@ -13,9 +13,8 @@ export class BoardModelGenerator {
         for (let y = 0; y < rows; y++) {
             const row: TileModel[] = [];
             for (let x = 0; x < cols; x++) {
-                const randomGroupIndex = this.randomGroupIndex;
-                const sprite = this.getSpriteByIndex(randomGroupIndex);
-                const tile = new TileModel(sprite, randomGroupIndex);
+                const tile = new TileModel();
+                this.randomInitializeTileMode(tile);
                 tile.setTileIndex(x, y);
                 row.push(tile);
             }
@@ -25,12 +24,20 @@ export class BoardModelGenerator {
         return board;
     }
 
-    public get randomGroupIndex(): number {
+    public randomInitializeTileMode(tileModel: TileModel): TileModel{
+        const randomGroupIndex = this.randomGroupIndex;
+        const sprite = this.getSpriteByIndex(randomGroupIndex);
+        tileModel.setSprite(sprite, randomGroupIndex);
+        tileModel.setEmpty(false);
+        return tileModel;
+    }
+
+    private get randomGroupIndex(): number {
         const randomGroupIndex = Math.floor(Math.random() * this.settings.tileSprites.length);
         return randomGroupIndex;
     }
 
-    public getSpriteByIndex(index: number) {
+    private getSpriteByIndex(index: number) {
         return this.settings.tileSprites[index];
     }
 }

@@ -3,17 +3,17 @@ export function playDestroyAnimationFromNode(node: cc.Node): Promise<void> {
         cc.tween(node)
             .to(0.2, { scale: 0.2, opacity: 0 })
             .call(() => {
-                node.destroy();
                 resolve();
             })
             .start();
     });
 }
 
-export function playMovingAnimationFromNode(node: cc.Node, toPosition: cc.Vec2): Promise<void> {
+export function playMovingAnimationFromNode(node: cc.Node, fromPosition: cc.Vec3, toPosition: cc.Vec3): Promise<void> {
+    node.setPosition(fromPosition);
     return new Promise(resolve => {
         cc.tween(node)
-            .to(0.2, { position : cc.v3(toPosition.x, toPosition.y, 0) }, { easing: "quadInOut" })
+            .to(0.2, { position : toPosition }, { easing: "quadInOut" })
             .call(resolve)
             .start();
     });

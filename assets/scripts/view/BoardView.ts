@@ -24,18 +24,21 @@ export default class BoardView extends cc.Component {
             for (let x = 0; x < models[y].length; x++) {
                 const model = models[y][x];
                 const tileNode = cc.instantiate(this.tilePrefab);
-                tileNode.parent = this.node;
-
-                tileNode.setPosition(this.getTilePosition(x, y));
-
                 const tileView = tileNode.getComponent(TileView);
 
+                tileNode.parent = this.node;
+                tileNode.setPosition(this.getTilePosition(x, y));
+
                 tileView.setSprite(model.Sprite);
-                model.sprite$.subscribe(tileView.setSprite);
+                model.sprite$.subscribe(sprite => tileView.setSprite(sprite));
 
                 model.isEmpty$.subscribe(isEmpty => {
                     if (isEmpty) {
-                        playDestroyAnimationFromNode(tileView.node);
+                        playDestroyAnimationFromNode(tileNode);
+                    }
+                    else{
+                        tileNode.setScale(1);
+                        tileNode.opacity = 255;
                     }
                 });
 
@@ -43,17 +46,17 @@ export default class BoardView extends cc.Component {
             }
         }
     }
-    
-    public getTileViewByModel(model: TileModel): TileView | null {
-        return this.tileViewMap.get(model) || null;
+
+    public getTileViewByModel(model: TileModel): TileView {
+        return this.tileViewMap.get(model);
     }
 
-    
-    public getTilePosition(x: number, y: number): cc.Vec2 {
+    public getTilePosition(x: number, y: number): cc.Vec3 {
         const startX = -(this.cellSize * 0.5 * (this.boardSize.x - 1));
         const startY = -(this.cellSize * 0.5 * (this.boardSize.y - 1));
-        return cc.v2(startX + x * this.cellSize, startY + y * this.cellSize);
+        return cc.v3(startX + x * this.cellSize, startY + y * this.cellSize, 0);
     }
+
     private calculateCellSizeFromModels(models: TileModel[][]): void {
         const rows = models.length;
         const cols = models[0]?.length || 0;

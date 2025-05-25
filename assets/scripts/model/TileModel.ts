@@ -7,9 +7,9 @@ export class TileModel {
     private _sprite$: BehaviorSubject<cc.SpriteFrame>;
     private _isEmpty$: BehaviorSubject<boolean>;
 
-    constructor(initialSprite: cc.SpriteFrame, spriteIndex: number) {
-        this._sprite$ = new BehaviorSubject<cc.SpriteFrame>(initialSprite);
-        this.groupIndex = spriteIndex;
+    constructor() {
+        this._sprite$ = new BehaviorSubject<cc.SpriteFrame>(null);
+        this.groupIndex = 0;
         this._isEmpty$ = new BehaviorSubject<boolean>(false);
     }
 

@@ -7,6 +7,7 @@ import { BoardModelGenerator } from "../core/BoardModelGenerator";
 import { ITileClusterResolver } from "../core/ITileClusterResolver";
 import { TileClusterResolver } from "../core/TileClusterResolver";
 import { playMovingAnimationFromNode } from "../animations/TileViewAnimation";
+import { delay } from "../core/Delay";
 
 const { ccclass, property } = cc._decorator;
 
@@ -36,15 +37,23 @@ export default class BoardController {
         return this.tileClusterResolver;
     }
 
-    public clearTiles(clearTiles: TileModel[]): void{
+    public async clearTiles(clearTiles: TileModel[]): Promise<void> {
         clearTiles.forEach(t => t.setEmpty(true));
-        const moveTiles = this.tileBoardModel.collapseAndRefillTiles(clearTiles);
-        console.log("moveTiles = " + moveTiles.length);
-        moveTiles.forEach(tileModel => {
+
+        await delay(200);
+
+        const collapseResult = this.tileBoardModel.collapseAndRefillTiles(clearTiles);
+        
+        collapseResult.forEach((shiftVerticalIndex, tileModel) => {
             var tileView = this.boardView.getTileViewByModel(tileModel);
-            var newPosition = this.boardView.getTilePosition(tileModel.Index.x, tileModel.Index.y);
-            playMovingAnimationFromNode(tileView.node, newPosition);
+
+            var targetPosition = this.boardView.getTilePosition(tileModel.Index.x, tileModel.Index.y);
+            var startPosition = this.boardView.getTilePosition(tileModel.Index.x, tileModel.Index.y + shiftVerticalIndex);
+            
+            playMovingAnimationFromNode(tileView.node, startPosition, targetPosition);
         });
+
+        await delay(300);
     }
 
     private bindClicks(models: TileModel[][]): void {
@@ -55,7 +64,6 @@ export default class BoardController {
                 if (!view) {
                     continue;
                 }
-
                 view.setClickCallback(() => {
                     this.onTileClick$.next(model);
                 });

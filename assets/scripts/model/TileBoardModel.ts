@@ -1,5 +1,6 @@
 import { TileModel } from "../model/TileModel";
 import { BoardModelGenerator } from "../core/BoardModelGenerator";
+import { TileClusterResolver } from "../core/TileClusterResolver";
 
 export class TileBoardModel {
     private boardModelGenerator: BoardModelGenerator;
@@ -18,13 +19,22 @@ export class TileBoardModel {
         return this.board[0]?.length || 0;
     }
 
-    public getTile(x: number, y: number): TileModel | null {
-        return this.board[y]?.[x] ?? null;
+    public tryGetTile(x: number, y: number): { success: true; tile: TileModel } | { success: false } {
+        if (y < 0 || x < 0 || y >= this.board.length || x >= this.board[0].length) {
+            return { success: false };
+        }
+
+        const row = this.board[y];
+        const tile = row[x];
+        
+        return { success: true, tile };
     }
 
+
     public setTile(x: number, y: number, tile: TileModel): void {
-        if (this.board[y] && this.board[y][x]) {
-            this.board[y][x] = tile;
+        this.board[y][x] = tile;
+        if (tile != null){
+            tile.setTileIndex(x, y);
         }
     }
 
@@ -32,55 +42,65 @@ export class TileBoardModel {
         return this.board;
     }
 
-    public collapseAndRefillTiles(removedTiles: TileModel[]): TileModel[] {
-        const columnsToProcess = new Set<number>();
-        const affectedTiles: TileModel[] = [];
+    public collapseAndRefillTiles(removedTiles: TileModel[]): 
+    Map<TileModel, number> {
+        const columnsToProcess = new Map<number, TileModel[]>();
+        const tileMapShiftMap = new Map<TileModel, number>();
 
         for (const tile of removedTiles) {
             if (tile.isEmpty) {
-                columnsToProcess.add(tile.Index.x);
+                this.setTile(tile.Index.x, tile.Index.y, null);
+                console.log("SET NULL x = " + tile.Index.x + ", y = " + tile.Index.y);
+                const x = tile.Index.x;
+                if (!columnsToProcess.has(x)) {
+                    columnsToProcess.set(x, []);
+                }
+                columnsToProcess.get(x).push(tile);
             }
         }
 
-        columnsToProcess.forEach(x => {
-            const tilesInColumn: TileModel[] = [];
+        columnsToProcess.forEach((tilesInColumn, xIndex) => {
+            const shiftIndex = tilesInColumn.length;
 
-            for (let y = 0; y < this.rows; y++) {
-                const tile = this.getTile(x, y);
-                if (tile && !tile.isEmpty) {
-                    tilesInColumn.push(tile);
+            console.log("Old tile move to down");
+            for (let y = 0, emptyOffset = 0; y < this.board[0].length; y++)
+            {
+                const tryGetTileResult = this.tryGetTile( xIndex, y);
+                if (!tryGetTileResult.success)
+                {
+                    emptyOffset++;
+                    continue;
                 }
+                var tileModel = tryGetTileResult.tile;
+                if (!tileModel || tileModel.isEmpty)
+                {
+                    emptyOffset++;
+                    continue;
+                }
+                if (emptyOffset == 0)
+                {
+                    continue;
+                }
+                this.setTile(xIndex, y, null);
+                const newYIndex = y - emptyOffset;
+                this.setTile(xIndex, newYIndex, tileModel);
+                tileMapShiftMap.set(tileModel, emptyOffset);
             }
+            
+            console.log("group tile move to up");
+            for (let index = 0; index < tilesInColumn.length; index++)
+            {
+                const tileModel = tilesInColumn[index];
+                const newYIndex = this.board[0].length - shiftIndex + index;
 
-            let writeY = 0;
-            for (const tile of tilesInColumn) {
-                if (tile.Index.y !== writeY) {
-                    const oldTile = this.getTile(x, writeY);
-                    this.setTile(tile.Index.x, tile.Index.y, oldTile);
-                    oldTile.setTileIndex(tile.Index.x, tile.Index.y);
+                this.setTile(xIndex, newYIndex, tileModel);
+                this.boardModelGenerator.randomInitializeTileMode(tileModel);
 
-                    this.setTile(x, writeY, tile);
-                    tile.setTileIndex(x, writeY);
-                    affectedTiles.push(tile);
-                }
-                writeY++;
-            }
-
-            for (let y = 0; y < this.rows; y++) {
-                const groupIndex = this.boardModelGenerator.randomGroupIndex;
-
-                const tile = this.getTile(x, y);
-                if (tile && tile.isEmpty) {
-                    const sprite = this.boardModelGenerator.getSpriteByIndex(groupIndex);
-                    tile.setSprite(sprite, groupIndex);
-                    tile.setTileIndex(x, y);
-                    tile.setEmpty(false);
-                    affectedTiles.push(tile);
-                }
+                tileMapShiftMap.set(tileModel, shiftIndex);
             }
         });
-        
-        return affectedTiles;
+
+        return tileMapShiftMap;
     }
 
     public forEach(callback: (tile: TileModel, x: number, y: number) => void): void {
@@ -89,18 +109,5 @@ export class TileBoardModel {
                 callback(this.board[y][x], x, y);
             }
         }
-    }
-
-    public getNeighbors(x: number, y: number): TileModel[] {
-        const deltas = [
-            { dx: -1, dy: 0 },
-            { dx: 1, dy: 0 },
-            { dx: 0, dy: -1 },
-            { dx: 0, dy: 1 },
-        ];
-
-        return deltas
-            .map(d => this.getTile(x + d.dx, y + d.dy))
-            .filter((t): t is TileModel => t !== null);
     }
 }

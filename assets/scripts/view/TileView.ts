@@ -10,6 +10,7 @@ export default class TileView extends cc.Component {
 
     private onClicked() {
         if (this._clickCallback) {
+            console.log("TileView Clicked!");
             this._clickCallback();
         }
     }
