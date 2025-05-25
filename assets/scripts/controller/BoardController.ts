@@ -8,6 +8,8 @@ import { ITileClusterResolver } from "../core/ITileClusterResolver";
 import { TileClusterResolver } from "../core/TileClusterResolver";
 import { playMovingAnimationFromNode } from "../animations/TileViewAnimation";
 import { delay } from "../core/Delay";
+import { ITileRandomizer } from "../core/tileBoardAnimator/ITileRandomizer";
+import { TileRandomizer } from "../core/tileBoardAnimator/TileRandomizer";
 
 const { ccclass, property } = cc._decorator;
 
@@ -19,13 +21,15 @@ export default class BoardController {
     private readonly tileBoardModel: TileBoardModel;
     private readonly gameSettings: GameSettings;
     private readonly tileClusterResolver: ITileClusterResolver;
+    private readonly boardModelGenerator: BoardModelGenerator;
 
     constructor(gameSettings: GameSettings, boardView: BoardView) {
+
         this.gameSettings = gameSettings;
         this.boardView = boardView;
 
-        const generator = new BoardModelGenerator(this.gameSettings);
-        this.tileBoardModel = new TileBoardModel(generator);
+        this.boardModelGenerator = new BoardModelGenerator(this.gameSettings);
+        this.tileBoardModel = new TileBoardModel(this.boardModelGenerator);
 
         this.boardView.buildBoard(this.tileBoardModel.getAll);
         this.bindClicks(this.tileBoardModel.getAll);
@@ -54,6 +58,11 @@ export default class BoardController {
         });
 
         await delay(300);
+    }
+
+    public async randomizeTiles(): Promise<void> {
+        const tileRandomizer = new TileRandomizer(this.tileBoardModel.getAll, this.boardModelGenerator);
+        await tileRandomizer.randomizeTiles();
     }
 
     private bindClicks(models: TileModel[][]): void {

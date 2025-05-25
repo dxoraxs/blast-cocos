@@ -2,15 +2,15 @@ import { TileModel } from "../model/TileModel";
 import GameSettings from "../GameSettings";
 import BoardController from "./BoardController";
 import UIManager from "./UIManager";
-import { BoardModelGenerator } from "../core/BoardModelGenerator";
-import { TileClusterResolver } from "../core/TileClusterResolver";
-import { ScoreCounter } from "../core/counters/ScoreCounter";
-import { MoveCounter } from "../core/counters/MoveCounter";
 import { DefaultScoreFormula } from "../core/scoreCalculator/DefaultScoreFormula ";
 import { ScoreCalculator } from "../core/scoreCalculator/ScoreCalculator";
-import { ITileClusterResolver } from "../core/ITileClusterResolver";
-import { TileBoardModel } from "../model/TileBoardModel";
 import { Subscription } from "rxjs";
+import { ScoreCounter } from "../core/counters/ScoreCounter";
+import { MoveCounter } from "../core/counters/MoveCounter";
+import { TopUIController } from "./TopUIController";
+import { EndGameController } from "./EndGameController";
+import { EndStateManager } from "../core/EndStateManager";
+import { GameEndResult } from "../core/GameEndResult";
 
 const { ccclass, property } = cc._decorator;
 
@@ -24,18 +24,25 @@ export default class GameController extends cc.Component {
 
     private boardController: BoardController;
     private scoreCounter = new ScoreCounter();
-    private moveCounter = new MoveCounter();
+    private moveCounter : MoveCounter;
     private scoreCalculator: ScoreCalculator;
     private clickSubscription?: Subscription;
+    private topUIController: TopUIController;
+    private endGameController : EndGameController;
+    private endStateManager : EndStateManager;
 
     onLoad() {
-        this.boardController = new BoardController(this.gameSettings, this.uiManager.BoardView);
-
         const formula = new DefaultScoreFormula(this.gameSettings);
         this.scoreCalculator = new ScoreCalculator(formula);
-        this.scoreCounter.reset();
-        this.moveCounter.init(this.gameSettings.maxMoves);
+        this.moveCounter = new MoveCounter(this.gameSettings.maxMoves);
+        this.endGameController = new EndGameController(this.uiManager.EndGameView);
+        this.boardController = new BoardController(this.gameSettings, this.uiManager.BoardView);
+        this.endStateManager = new EndStateManager(this.scoreCounter, this.moveCounter, this.gameSettings);
 
+        this.topUIController = new TopUIController(
+            this.scoreCounter, this.moveCounter,
+            this.uiManager.TopView, this.gameSettings.targetScore
+        );
         this.bindClicks();
     }
 
@@ -65,6 +72,27 @@ export default class GameController extends cc.Component {
         const newScore = this.scoreCalculator.calculate(group.length);
         this.scoreCounter.add(newScore);
 
+        console.log("start check end level");
+        var result = this.endStateManager.checkToEndLevel();
+
+        console.log("endStateManager result = " + result);
+        switch (result){
+            case GameEndResult.Lose:
+                await this.endGameController.showLose(this.scoreCounter.value);
+                await this.restartLevel();
+                break;
+            case GameEndResult.Win:
+                await this.endGameController.showWin(this.scoreCounter.value);
+                await this.restartLevel();
+                break;
+        }
+
         this.bindClicks();
+    }
+
+    private async restartLevel() : Promise<void>{
+        await this.boardController.randomizeTiles();
+        this.scoreCounter.reset();
+        this.moveCounter.reset();
     }
 }

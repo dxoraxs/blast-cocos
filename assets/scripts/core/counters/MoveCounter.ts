@@ -1,15 +1,15 @@
 import { AbstractCounter } from "./AbstractCounter";
 
 export class MoveCounter extends AbstractCounter {
-    constructor() {
-        super(0);
+    constructor(initial : number) {
+        super(initial);
     }
 
     public init(moves: number): void {
         this.reset(moves);
     }
 
-    public isOut(): boolean {
+    public get isOut(): boolean {
         return this.value <= 0;
     }
 }

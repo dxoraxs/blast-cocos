@@ -61,9 +61,9 @@ export class TileBoardModel {
         columnsToProcess.forEach((tilesInColumn, xIndex) => {
             const shiftIndex = tilesInColumn.length;
 
-            for (let y = 0, emptyOffset = 0; y < this.board[0].length; y++)
+            for (let y = 0, emptyOffset = 0; y < this.board.length; y++)
             {
-                const tryGetTileResult = this.tryGetTile( xIndex, y);
+                const tryGetTileResult = this.tryGetTile(xIndex, y);
                 if (!tryGetTileResult.success)
                 {
                     emptyOffset++;
@@ -88,7 +88,7 @@ export class TileBoardModel {
             for (let index = 0; index < tilesInColumn.length; index++)
             {
                 const tileModel = tilesInColumn[index];
-                const newYIndex = this.board[0].length - shiftIndex + index;
+                const newYIndex = this.board.length - shiftIndex + index;
 
                 this.setTile(xIndex, newYIndex, tileModel);
                 this.boardModelGenerator.randomInitializeTileMode(tileModel);

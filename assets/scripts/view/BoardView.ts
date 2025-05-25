@@ -16,7 +16,7 @@ export default class BoardView extends cc.Component {
 
     public buildBoard(models: TileModel[][]): void {
         this.calculateCellSizeFromModels(models);
-        this.boardSize = cc.v2(models.length, models[0].length);
+        this.boardSize = cc.v2(models[0].length, models.length);
         this.node.removeAllChildren();
         this.tileViewMap.clear();
 
@@ -50,12 +50,14 @@ export default class BoardView extends cc.Component {
     public getTileViewByModel(model: TileModel): TileView {
         return this.tileViewMap.get(model);
     }
-
+    
     public getTilePosition(x: number, y: number): cc.Vec3 {
-        const startX = -(this.cellSize * 0.5 * (this.boardSize.x - 1));
-        const startY = -(this.cellSize * 0.5 * (this.boardSize.y - 1));
-        return cc.v3(startX + x * this.cellSize, startY + y * this.cellSize, 0);
+        const offsetX = (this.boardSize.x - 1) * 0.5 * this.cellSize;
+        const offsetY = (this.boardSize.y - 1) * 0.5 * this.cellSize;
+
+        return cc.v3(x * this.cellSize - offsetX, y * this.cellSize - offsetY, 0);
     }
+
 
     private calculateCellSizeFromModels(models: TileModel[][]): void {
         const rows = models.length;

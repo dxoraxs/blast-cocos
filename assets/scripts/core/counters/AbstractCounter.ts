@@ -2,9 +2,11 @@ import { BehaviorSubject, Observable } from "rxjs";
 
 export abstract class AbstractCounter {
     protected value$: BehaviorSubject<number>;
+    private readonly defaultValue : number;
 
     constructor(initial: number = 0) {
         this.value$ = new BehaviorSubject<number>(initial);
+        this.defaultValue = initial;
     }
 
     public get value(): number {
@@ -15,7 +17,7 @@ export abstract class AbstractCounter {
         return this.value$.asObservable();
     }
 
-    public reset(value: number = 0): void {
+    public reset(value: number = this.defaultValue): void {
         this.value$.next(value);
     }
 
