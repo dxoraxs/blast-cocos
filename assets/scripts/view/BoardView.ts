@@ -30,7 +30,10 @@ export default class BoardView extends cc.Component {
                 tileNode.setPosition(this.getTilePosition(x, y));
 
                 tileView.setSprite(model.Sprite);
-                model.sprite$.subscribe(sprite => tileView.setSprite(sprite));
+                model.sprite$.subscribe(sprite => {
+                    console.log("CHANGE SPRITE || "+model.toString);
+                    tileView.setSprite(sprite);
+                });
 
                 model.isEmpty$.subscribe(isEmpty => {
                     if (isEmpty) {

@@ -9,6 +9,23 @@ export class TileClusterResolver implements ITileClusterResolver {
         this.tileBoardModel = tileBoardModel;
     }
 
+    checkHaveGroup(findCountTile: number): boolean {
+        const tileModels = this.tileBoardModel.getAll;
+        const yMaxIndex = tileModels.length;
+        const xMaxIndex = tileModels[0].length;
+
+        for (let y = 0; y < yMaxIndex; y++) {
+            for (let x = 0; x < xMaxIndex; x++) {
+                var group = this.findGroup(cc.v2(x, y), tileModels[y][x].GroupIndex);
+                if (group.length >= findCountTile) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     public findGroup(start: cc.Vec2, groupIndex: number): TileModel[] {
         const visited = new Set<string>();
         const result: TileModel[] = [];

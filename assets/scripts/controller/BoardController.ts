@@ -44,7 +44,7 @@ export default class BoardController {
     public async clearTiles(clearTiles: TileModel[]): Promise<void> {
         clearTiles.forEach(t => t.setEmpty(true));
 
-        await delay(200);
+        await delay(250);
 
         const collapseResult = this.tileBoardModel.collapseAndRefillTiles(clearTiles);
         
@@ -53,7 +53,9 @@ export default class BoardController {
 
             var targetPosition = this.boardView.getTilePosition(tileModel.Index.x, tileModel.Index.y);
             var startPosition = this.boardView.getTilePosition(tileModel.Index.x, tileModel.Index.y + shiftVerticalIndex);
-            
+
+            console.log("START MOVING || " + tileModel.toString);
+            console.log("start = "+startPosition+", target = " + targetPosition);
             playMovingAnimationFromNode(tileView.node, startPosition, targetPosition);
         });
 

@@ -13,6 +13,10 @@ export class TileModel {
         this._isEmpty$ = new BehaviorSubject<boolean>(false);
     }
 
+    public get toString() : string{
+        return "Index = " + this.index +", groupIndex = " + this.groupIndex + ", isEmpty = " + this.isEmpty;
+    }
+
     public setTileIndex(x: number, y: number)
     {
         this.index = cc.v2(x, y);

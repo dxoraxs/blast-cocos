@@ -21,5 +21,8 @@ export default class GameSettings extends cc.Component {
     public minGroupSize: number = 2;
     
     @property
+    public countRefreshBoard: number = 2;
+    
+    @property
     public scorePerTile: number = 10;
 }

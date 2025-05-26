@@ -11,6 +11,7 @@ import { TopUIController } from "./TopUIController";
 import { EndGameController } from "./EndGameController";
 import { EndStateManager } from "../core/EndStateManager";
 import { GameEndResult } from "../core/GameEndResult";
+import { delay } from "../core/Delay";
 
 const { ccclass, property } = cc._decorator;
 
@@ -30,6 +31,7 @@ export default class GameController extends cc.Component {
     private topUIController: TopUIController;
     private endGameController : EndGameController;
     private endStateManager : EndStateManager;
+    private counterRefreshBoard = 0;
 
     onLoad() {
         const formula = new DefaultScoreFormula(this.gameSettings);
@@ -68,31 +70,61 @@ export default class GameController extends cc.Component {
         this.moveCounter.decrement();
 
         await this.boardController.clearTiles(group);
-        
+
         const newScore = this.scoreCalculator.calculate(group.length);
         this.scoreCounter.add(newScore);
 
-        console.log("start check end level");
-        var result = this.endStateManager.checkToEndLevel();
+        await this.checkEndLevel();
+        const isRefreshAbortively = await this.tryRefreshBoard();
 
-        console.log("endStateManager result = " + result);
-        switch (result){
-            case GameEndResult.Lose:
-                await this.endGameController.showLose(this.scoreCounter.value);
-                await this.restartLevel();
-                break;
-            case GameEndResult.Win:
-                await this.endGameController.showWin(this.scoreCounter.value);
-                await this.restartLevel();
-                break;
+        if (isRefreshAbortively) {
+            await this.endGameController.showLose(this.scoreCounter.value);
+            await this.restartLevel();
         }
-
+    
         this.bindClicks();
     }
 
+    private async tryRefreshBoard() : Promise<boolean> {
+        var needToRefresh = !this.boardController.clusterResolver.checkHaveGroup(this.gameSettings.minGroupSize);
+        var haveTryRefresh = this.counterRefreshBoard < this.gameSettings.countRefreshBoard;
+        while (needToRefresh && haveTryRefresh) {
+            this.counterRefreshBoard++;
+            await this.refreshBoard();
+
+            await delay(300);
+
+            needToRefresh = !this.boardController.clusterResolver.checkHaveGroup(this.gameSettings.minGroupSize);
+            haveTryRefresh = this.counterRefreshBoard < this.gameSettings.countRefreshBoard;
+        }
+        return needToRefresh && !haveTryRefresh;
+    }
+
+    private async checkEndLevel() : Promise<void>{
+        var result = this.endStateManager.checkToEndLevel();
+
+        switch (result){
+            case GameEndResult.Lose:
+                await this.endGameController.showLose(this.scoreCounter.value);
+                break;
+            case GameEndResult.Win:
+                await this.endGameController.showWin(this.scoreCounter.value);
+                break;
+        }
+
+        if (result == GameEndResult.Lose || result == GameEndResult.Win) {
+            await this.restartLevel();
+        }
+    }
+
     private async restartLevel() : Promise<void>{
-        await this.boardController.randomizeTiles();
+        await this.refreshBoard();
         this.scoreCounter.reset();
         this.moveCounter.reset();
+        this.counterRefreshBoard = 0;
+    }
+
+    private async refreshBoard() : Promise<void>{
+        await this.boardController.randomizeTiles();
     }
 }

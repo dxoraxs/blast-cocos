@@ -16,17 +16,12 @@ export class EndStateManager {
     }
 
     public checkToEndLevel() : GameEndResult{
-        console.log("check score");
         if (this.scoreCounter.value >= this.settings.targetScore){
-            console.log("score norm");
             return GameEndResult.Win;
         }
-        console.log("check move");
         if (this.moveCounter.isOut){
-            console.log("move norm");
             return GameEndResult.Lose;
         }
-        console.log("result none");
         return GameEndResult.None;
     }
 }

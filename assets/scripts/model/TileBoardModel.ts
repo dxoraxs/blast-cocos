@@ -91,20 +91,14 @@ export class TileBoardModel {
                 const newYIndex = this.board.length - shiftIndex + index;
 
                 this.setTile(xIndex, newYIndex, tileModel);
+                console.log("Before "+tileModel.toString);
                 this.boardModelGenerator.randomInitializeTileMode(tileModel);
+                console.log("After "+tileModel.toString);
 
                 tileMapShiftMap.set(tileModel, shiftIndex);
             }
         });
 
         return tileMapShiftMap;
-    }
-
-    public forEach(callback: (tile: TileModel, x: number, y: number) => void): void {
-        for (let y = 0; y < this.rows; y++) {
-            for (let x = 0; x < this.cols; x++) {
-                callback(this.board[y][x], x, y);
-            }
-        }
     }
 }
