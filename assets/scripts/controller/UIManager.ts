@@ -1,4 +1,5 @@
 import BoardView from "../view/BoardView";
+import BottomView from "../view/BottomView";
 import EndGameView from "../view/EndGameView";
 import TopView from "../view/TopView";
 
@@ -9,6 +10,9 @@ export default class UIManager extends cc.Component {
     @property(BoardView)
     private boardView: BoardView = null;
 
+    @property(BottomView)
+    private bottomView: BottomView = null;
+
     @property(TopView)
     private topView: TopView = null;
 
@@ -17,6 +21,10 @@ export default class UIManager extends cc.Component {
 
     get TopView() {
         return this.topView;
+    }
+
+    get BottomView() {
+        return this.bottomView;
     }
 
     get EndGameView() {

@@ -1,6 +1,6 @@
 import { TileModel } from "../model/TileModel";
 import { BoardModelGenerator } from "../core/BoardModelGenerator";
-import { TileClusterResolver } from "../core/TileClusterResolver";
+import { DefaultTileClusterResolver } from "../core/clusterResolver/DefaultTileClusterResolver";
 
 export class TileBoardModel {
     private boardModelGenerator: BoardModelGenerator;
@@ -91,9 +91,7 @@ export class TileBoardModel {
                 const newYIndex = this.board.length - shiftIndex + index;
 
                 this.setTile(xIndex, newYIndex, tileModel);
-                console.log("Before "+tileModel.toString);
                 this.boardModelGenerator.randomInitializeTileMode(tileModel);
-                console.log("After "+tileModel.toString);
 
                 tileMapShiftMap.set(tileModel, shiftIndex);
             }

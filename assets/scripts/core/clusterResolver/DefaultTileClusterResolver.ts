@@ -1,10 +1,10 @@
-import { TileBoardModel } from "../model/TileBoardModel";
-import { TileModel } from "../model/TileModel";
+import { TileBoardModel } from "../../model/TileBoardModel";
+import { TileModel } from "../../model/TileModel";
 import { ITileClusterResolver } from "./ITileClusterResolver";
 
-export class TileClusterResolver implements ITileClusterResolver {
+export class DefaultTileClusterResolver implements ITileClusterResolver {
     private readonly tileBoardModel: TileBoardModel;
-    
+
     constructor(tileBoardModel: TileBoardModel) {
         this.tileBoardModel = tileBoardModel;
     }
@@ -16,7 +16,7 @@ export class TileClusterResolver implements ITileClusterResolver {
 
         for (let y = 0; y < yMaxIndex; y++) {
             for (let x = 0; x < xMaxIndex; x++) {
-                var group = this.findGroup(cc.v2(x, y), tileModels[y][x].GroupIndex);
+                var group = this.findGroup(tileModels[y][x]);
                 if (group.length >= findCountTile) {
                     return true;
                 }
@@ -26,9 +26,11 @@ export class TileClusterResolver implements ITileClusterResolver {
         return false;
     }
 
-    public findGroup(start: cc.Vec2, groupIndex: number): TileModel[] {
+    public findGroup(tileModel: TileModel): TileModel[] {
         const visited = new Set<string>();
         const result: TileModel[] = [];
+        const start = tileModel.Index;
+        const groupIndex = tileModel.GroupIndex;
 
         const key = (x: number, y: number) => `${x},${y}`;
         const stack = [{ x: start.x, y: start.y }];

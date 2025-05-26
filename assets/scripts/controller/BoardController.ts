@@ -4,12 +4,13 @@ import GameSettings from "../GameSettings";
 import { Subject } from "rxjs";
 import { TileBoardModel } from "../model/TileBoardModel";
 import { BoardModelGenerator } from "../core/BoardModelGenerator";
-import { ITileClusterResolver } from "../core/ITileClusterResolver";
-import { TileClusterResolver } from "../core/TileClusterResolver";
+import { ITileClusterResolver } from "../core/clusterResolver/ITileClusterResolver";
+import { DefaultTileClusterResolver } from "../core/clusterResolver/DefaultTileClusterResolver";
 import { playMovingAnimationFromNode } from "../animations/TileViewAnimation";
 import { delay } from "../core/Delay";
-import { ITileRandomizer } from "../core/tileBoardAnimator/ITileRandomizer";
 import { TileRandomizer } from "../core/tileBoardAnimator/TileRandomizer";
+import { ClusterResolverType } from "../core/clusterResolver/ClusterResolverType";
+import { BombTileClusterResolver } from "../core/clusterResolver/BombTileClusterResolver";
 
 const { ccclass, property } = cc._decorator;
 
@@ -20,9 +21,9 @@ export default class BoardController {
     private readonly boardView: BoardView;
     private readonly tileBoardModel: TileBoardModel;
     private readonly gameSettings: GameSettings;
-    private readonly tileClusterResolver: ITileClusterResolver;
     private readonly boardModelGenerator: BoardModelGenerator;
-
+    private readonly clusterResolvers = new Map<ClusterResolverType, ITileClusterResolver>;
+    
     constructor(gameSettings: GameSettings, boardView: BoardView) {
 
         this.gameSettings = gameSettings;
@@ -33,12 +34,17 @@ export default class BoardController {
 
         this.boardView.buildBoard(this.tileBoardModel.getAll);
         this.bindClicks(this.tileBoardModel.getAll);
-        this.tileClusterResolver = new TileClusterResolver(this.tileBoardModel);
+
+        this.clusterResolvers.set(ClusterResolverType.Default, new DefaultTileClusterResolver(this.tileBoardModel));
+        this.clusterResolvers.set(ClusterResolverType.Bomb, new BombTileClusterResolver(this.tileBoardModel, gameSettings.bombRadius));
     }
 
-    public get clusterResolver(): ITileClusterResolver
-    {
-        return this.tileClusterResolver;
+    public findGroup(tileModel: TileModel, resolverType: ClusterResolverType): TileModel[]{
+        return this.clusterResolvers.get(resolverType).findGroup(tileModel);
+    }
+
+    public checkHaveGroup(findCountTile: number):boolean {
+        return this.clusterResolvers.get(ClusterResolverType.Default).checkHaveGroup(findCountTile);
     }
 
     public async clearTiles(clearTiles: TileModel[]): Promise<void> {
@@ -54,8 +60,6 @@ export default class BoardController {
             var targetPosition = this.boardView.getTilePosition(tileModel.Index.x, tileModel.Index.y);
             var startPosition = this.boardView.getTilePosition(tileModel.Index.x, tileModel.Index.y + shiftVerticalIndex);
 
-            console.log("START MOVING || " + tileModel.toString);
-            console.log("start = "+startPosition+", target = " + targetPosition);
             playMovingAnimationFromNode(tileView.node, startPosition, targetPosition);
         });
 

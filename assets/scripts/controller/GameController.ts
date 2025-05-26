@@ -12,6 +12,10 @@ import { EndGameController } from "./EndGameController";
 import { EndStateManager } from "../core/EndStateManager";
 import { GameEndResult } from "../core/GameEndResult";
 import { delay } from "../core/Delay";
+import { SelectClusterModel } from "../model/SelectClusterModel";
+import BoosterController from "./BoosterController";
+import { ClusterResolverType } from "../core/clusterResolver/ClusterResolverType";
+import { BoosterType } from "../core/BoosterType";
 
 const { ccclass, property } = cc._decorator;
 
@@ -27,10 +31,13 @@ export default class GameController extends cc.Component {
     private scoreCounter = new ScoreCounter();
     private moveCounter : MoveCounter;
     private scoreCalculator: ScoreCalculator;
-    private clickSubscription?: Subscription;
+    private tileClickSubscription?: Subscription;
+    private boosterClickSubscription?: Subscription;
     private topUIController: TopUIController;
     private endGameController : EndGameController;
     private endStateManager : EndStateManager;
+    private selectClusterModel = new SelectClusterModel();
+    private boosterController : BoosterController;
     private counterRefreshBoard = 0;
 
     onLoad() {
@@ -40,6 +47,7 @@ export default class GameController extends cc.Component {
         this.endGameController = new EndGameController(this.uiManager.EndGameView);
         this.boardController = new BoardController(this.gameSettings, this.uiManager.BoardView);
         this.endStateManager = new EndStateManager(this.scoreCounter, this.moveCounter, this.gameSettings);
+        this.boosterController = new BoosterController(this.gameSettings, this.uiManager.BottomView, this.selectClusterModel);
 
         this.topUIController = new TopUIController(
             this.scoreCounter, this.moveCounter,
@@ -49,24 +57,55 @@ export default class GameController extends cc.Component {
     }
 
     private bindClicks(): void {
-        this.clickSubscription?.unsubscribe();
-        this.clickSubscription = this.boardController.onTileClick$.subscribe((tileModel) => {
+        this.unsubscribeClicks();
+        this.tileClickSubscription = this.boardController.onTileClick$.subscribe((tileModel) => {
             this.handleTileClick(tileModel);
+        });
+
+        this.boosterClickSubscription = this.boosterController.onBoosterItemClick$.subscribe(boosterType =>{
+            this.handleBoosterClick(boosterType);
         });
     }
 
     private handleTileClick(tileModel: TileModel): void {
-        const group = this.boardController.clusterResolver.findGroup(tileModel.Index, tileModel.GroupIndex);
+        this.findTileGroup(tileModel);
+    }
+
+    private findTileGroup(tileModel: TileModel): void{
+        const group = this.boardController.findGroup(tileModel, this.selectClusterModel.Type);
 
         if (group.length < this.gameSettings.minGroupSize) {
             return;
         }
 
-        this.collapseGroupLogic(group);  
+        this.collapseGroupLogic(group);
+    }
+
+    private handleBoosterClick(boosterType: BoosterType) {
+        if (Number(this.selectClusterModel.Type) - 1 == Number(boosterType)) {
+            this.selectClusterModel.setType(ClusterResolverType.Default);
+        }
+        else {
+            const numberClusterType = Number(boosterType) + 1;
+            const newClusterType = (numberClusterType) as ClusterResolverType;
+            this.selectClusterModel.setType(newClusterType);
+        }
+    }
+
+    private unsubscribeClicks(): void{
+        this.boosterClickSubscription?.unsubscribe();
+        this.tileClickSubscription?.unsubscribe();
     }
 
     private async collapseGroupLogic(group: TileModel[]): Promise<void> {
-        this.clickSubscription?.unsubscribe();
+        this.unsubscribeClicks();
+        
+        if (this.selectClusterModel.Type !== ClusterResolverType.Default) {
+            this.boosterController.useBooster(this.selectClusterModel.Type);
+        }
+        
+        this.selectClusterModel.setType(ClusterResolverType.Default);
+
         this.moveCounter.decrement();
 
         await this.boardController.clearTiles(group);
@@ -86,7 +125,7 @@ export default class GameController extends cc.Component {
     }
 
     private async tryRefreshBoard() : Promise<boolean> {
-        var needToRefresh = !this.boardController.clusterResolver.checkHaveGroup(this.gameSettings.minGroupSize);
+        var needToRefresh = !this.boardController.checkHaveGroup(this.gameSettings.minGroupSize);
         var haveTryRefresh = this.counterRefreshBoard < this.gameSettings.countRefreshBoard;
         while (needToRefresh && haveTryRefresh) {
             this.counterRefreshBoard++;
@@ -94,7 +133,7 @@ export default class GameController extends cc.Component {
 
             await delay(300);
 
-            needToRefresh = !this.boardController.clusterResolver.checkHaveGroup(this.gameSettings.minGroupSize);
+            needToRefresh = !this.boardController.checkHaveGroup(this.gameSettings.minGroupSize);
             haveTryRefresh = this.counterRefreshBoard < this.gameSettings.countRefreshBoard;
         }
         return needToRefresh && !haveTryRefresh;
